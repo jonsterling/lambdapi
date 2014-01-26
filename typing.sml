@@ -1,15 +1,24 @@
 use "TYPING.sig";
 
-functor Typing (eval : EVAL) :> TYPING =
+signature TYPINGDEPS =
+sig
+  structure syn   : SYN
+  structure eval  : EVAL where syn = syn
+  structure quote : QUOTE where syn = syn
+end
+
+functor Typing (deps : TYPINGDEPS) :> TYPING =
 struct
-  structure eval = eval
-  structure syn = eval.syn
+  structure syn = deps.syn
+  structure eval = deps.eval
+  structure quote = deps.quote
 
   exception hole
 
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
   exception cannot_synthesize_type
+  exception mismatched_type of syn.value * syn.value
 
   fun itype (i, g: syn.value syn.name_env * syn.ctx, x) =
     case x of
@@ -49,7 +58,15 @@ struct
           syn.vuni
         end
 
-  and ctype (i, g, x, t) = raise hole
+  and ctype (i, g, x, t) =
+    case x of
+      syn.inf e =>
+        let
+          val t' = itype (i, g, e)
+        in
+          raise hole
+        end
+    | _         => raise hole
   and isubst x = raise hole
   and csubst x = raise hole
 end
