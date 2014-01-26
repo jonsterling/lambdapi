@@ -9,6 +9,7 @@ struct
 
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
+  exception cannot_synthesize_type
 
   fun itype (i, g: syn.value syn.name_env * syn.ctx, x) =
     case x of
@@ -29,6 +30,7 @@ struct
         in
           syn.vuni
         end
+    | syn.bound x      => raise cannot_synthesize_type
     | syn.free x       =>
         (case syn.lookup (x, #2 g) of
           NONE    => raise unknown_identifier x
@@ -46,7 +48,6 @@ struct
         in
           syn.vuni
         end
-    | _ => raise hole
 
   and ctype (i, g, x, t) = raise hole
   and isubst x = raise hole

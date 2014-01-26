@@ -14,4 +14,5 @@ sig
 
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
+  exception cannot_synthesize_type
 end
