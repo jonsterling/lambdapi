@@ -1,11 +1,8 @@
-use "EVAL.sig";
-use "QUOTE.sig";
+use "SYN.sig";
 
 signature TYPING =
 sig
   structure syn : SYN
-  structure eval : EVAL where syn = syn
-  structure quote : QUOTE where syn = syn
 
   val itype : int * (syn.value syn.name_env * syn.ctx) * syn.iterm -> syn.ty
   val ctype : int * (syn.value syn.name_env * syn.ctx) * syn.cterm * syn.ty -> unit

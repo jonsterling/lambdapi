@@ -1,4 +1,6 @@
 use "TYPING.sig";
+use "EVAL.sig";
+use "QUOTE.sig";
 
 signature TYPINGDEPS =
 sig
