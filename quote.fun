@@ -1,6 +1,6 @@
 use "QUOTE.sig";
 
-functor Quote (syn : SYN) :> QUOTE =
+functor Quotation (syn : SYN) : QUOTE =
 struct
   structure syn = syn
 

@@ -1,6 +1,6 @@
 use "EVAL.sig";
 
-functor Evaluation (syn : SYN) :> EVAL =
+functor Evaluation (syn : SYN) : EVAL =
 struct
   structure syn = syn
 
