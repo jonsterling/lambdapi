@@ -20,7 +20,7 @@ struct
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
   exception cannot_synthesize_type
-  exception mismatched_type of syn.value * syn.value
+  exception mismatched_type of syn.value * (syn.value option)
 
   fun itype (i, g: syn.value syn.name_env * syn.ctx, x) =
     case x of
@@ -41,7 +41,6 @@ struct
         in
           syn.vuni
         end
-    | syn.bound x      => raise cannot_synthesize_type
     | syn.free x       =>
         (case syn.lookup (x, #2 g) of
           NONE    => raise unknown_identifier x
@@ -59,16 +58,43 @@ struct
         in
           syn.vuni
         end
+    | syn.bound x      => raise cannot_synthesize_type
 
   and ctype (i, g, x, t) =
     case x of
       syn.inf e =>
         let
-          val t' = itype (i, g, e)
+          val t'  = itype (i, g, e)
+          val qt  = quote.quote (0, t)
+          val qt' = quote.quote (0, t')
         in
-          raise hole
+          if qt <> qt' then raise mismatched_type (t, SOME t') else ()
         end
-    | _         => raise hole
+    | syn.lam e =>
+        (case t of
+          syn.vpi (dom, cod) =>
+            ctype (i + 1, ((fn (d,g) => (d, (syn.locl i, dom) :: g)) g), csubst (0, syn.free (syn.locl i), e), cod (syn.vfree (syn.locl i)))
+        | _ => raise mismatched_type (t, NONE))
+    | syn.refl (a,z) =>
+        (case t of
+          syn.veq (vb, vx, vy) =>
+            let
+              val _ = ctype (i, g, a, syn.vuni)
+              val va = eval.ceval (a, (#1 g, []))
+              val vz = eval.ceval (z, (#1 g, []))
+              val qa = quote.quote (0, va)
+              val qb = quote.quote (0, vb)
+              val qz = quote.quote (0, vz)
+              val qx = quote.quote (0, vx)
+              val qy = quote.quote (0, vy)
+            in
+              if qa <> qb orelse qz <> qx orelse qz <> qy
+              then
+                raise mismatched_type (t, NONE)
+              else
+                ()
+            end
+        | _ => raise mismatched_type (t, NONE))
   and isubst x = raise hole
   and csubst x = raise hole
 end

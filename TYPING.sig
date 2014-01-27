@@ -13,5 +13,5 @@ sig
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
   exception cannot_synthesize_type
-  exception mismatched_type of syn.value * syn.value
+  exception mismatched_type of syn.value * (syn.value option)
 end
