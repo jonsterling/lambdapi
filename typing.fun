@@ -11,80 +11,79 @@ end
 
 functor Typing (deps : TYPINGDEPS) :> TYPING =
 struct
-  structure syn   = deps.syn
-  structure eval  = deps.eval
-  structure quote = deps.quote
+  open deps
+  open syn eval quote
 
-  exception unknown_identifier of syn.name
-  exception illegal_application of syn.iterm * syn.cterm
+  exception unknown_identifier of name
+  exception illegal_application of iterm * cterm
   exception cannot_synthesize_type
-  exception mismatched_type of syn.value * (syn.value option)
+  exception mismatched_type of value * (value option)
 
-  fun itype (i, g: syn.value syn.name_env * syn.ctx, x) =
+  fun itype (i, g: value name_env * ctx, x) =
     case x of
-      syn.ann (e, t)   =>
+      ann (e, t)   =>
         let
-          val _ = ctype (i, g, t, syn.vuni)
-          val t = eval.ceval (t, (#1 g, []))
+          val _ = ctype (i, g, t, vuni)
+          val t = ceval (t, (#1 g, []))
           val _ = ctype (i, g, e, t)
         in
           t
         end
-    | syn.uni          => syn.vuni
-    | syn.pi (s, t)    =>
+    | uni          => vuni
+    | pi (s, t)    =>
         let
-          val _  = ctype (i, g, t, syn.vuni)
-          val s' = eval.ceval (t, (#1 g, []))
-          val _  = ctype (i + 1, ((fn (d,g) => (d, (syn.locl i, s') :: g)) g), csubst (0, syn.free (syn.locl i), t), syn.vuni)
+          val _  = ctype (i, g, t, vuni)
+          val s' = ceval (t, (#1 g, []))
+          val _  = ctype (i + 1, ((fn (d,g) => (d, (locl i, s') :: g)) g), csubst (0, free (locl i), t), vuni)
         in
-          syn.vuni
+          vuni
         end
-    | syn.free x       =>
-        (case syn.lookup (x, #2 g) of
+    | free x       =>
+        (case lookup (x, #2 g) of
           NONE    => raise unknown_identifier x
         | SOME ty => ty)
-    | syn.app (f, x)   =>
+    | app (f, x)   =>
         (case itype (i, g, f) of
-          syn.vpi (s, t) => (ctype (i, g, x, s); t (eval.ceval (x, (#1 g, []))))
+          vpi (s, t) => (ctype (i, g, x, s); t (ceval (x, (#1 g, []))))
         | _              => raise illegal_application (f, x))
-    | syn.eq (a, x, y) =>
+    | eq (a, x, y) =>
         let
-          val _  = ctype (i, g, a, syn.vuni)
-          val a' = eval.ceval (a, (#1 g, []))
+          val _  = ctype (i, g, a, vuni)
+          val a' = ceval (a, (#1 g, []))
           val _  = ctype (i, g, x, a')
           val _  = ctype (i, g, y, a')
         in
-          syn.vuni
+          vuni
         end
-    | syn.bound x      => raise cannot_synthesize_type
+    | bound x      => raise cannot_synthesize_type
 
   and ctype (i, g, x, t) =
     case x of
-      syn.inf e =>
+      inf e =>
         let
           val t'  = itype (i, g, e)
-          val qt  = quote.quote (0, t)
-          val qt' = quote.quote (0, t')
+          val qt  = quote (0, t)
+          val qt' = quote (0, t')
         in
           if qt <> qt' then raise mismatched_type (t, SOME t') else ()
         end
-    | syn.lam e =>
+    | lam e =>
         (case t of
-          syn.vpi (dom, cod) =>
-            ctype (i + 1, ((fn (d,g) => (d, (syn.locl i, dom) :: g)) g), csubst (0, syn.free (syn.locl i), e), cod (syn.vfree (syn.locl i)))
+          vpi (dom, cod) =>
+            ctype (i + 1, ((fn (d,g) => (d, (locl i, dom) :: g)) g), csubst (0, free (locl i), e), cod (vfree (locl i)))
         | _ => raise mismatched_type (t, NONE))
-    | syn.refl (a,z) =>
+    | refl (a,z) =>
         (case t of
-          syn.veq (vb, vx, vy) =>
+          veq (vb, vx, vy) =>
             let
-              val _ = ctype (i, g, a, syn.vuni)
-              val va = eval.ceval (a, (#1 g, []))
-              val vz = eval.ceval (z, (#1 g, []))
-              val qa = quote.quote (0, va)
-              val qb = quote.quote (0, vb)
-              val qz = quote.quote (0, vz)
-              val qx = quote.quote (0, vx)
-              val qy = quote.quote (0, vy)
+              val _ = ctype (i, g, a, vuni)
+              val va = ceval (a, (#1 g, []))
+              val vz = ceval (z, (#1 g, []))
+              val qa = quote (0, va)
+              val qb = quote (0, vb)
+              val qz = quote (0, vz)
+              val qx = quote (0, vx)
+              val qy = quote (0, vy)
             in
               if qa <> qb orelse qz <> qx orelse qz <> qy
               then
@@ -96,18 +95,18 @@ struct
 
   and isubst (i, x, y) =
     case y of
-      syn.ann (c, c')   => syn.ann (csubst (i, x, c), csubst (i, x, c'))
-    | syn.uni           => syn.uni
-    | syn.pi (dom, cod) => syn.pi (csubst (i, x, dom), csubst (i + 1, x, cod))
-    | syn.bound j       => if i = j then x else syn.bound j
-    | syn.free z        => syn.free z
-    | syn.app (f, z)    => syn.app (isubst (i, x, f), csubst (i, x, z))
-    | syn.eq (a, m, n)  => syn.eq (csubst (i, x, a), csubst (i, x, m), csubst (i, x, n))
+      ann (c, c')   => ann (csubst (i, x, c), csubst (i, x, c'))
+    | uni           => uni
+    | pi (dom, cod) => pi (csubst (i, x, dom), csubst (i + 1, x, cod))
+    | bound j       => if i = j then x else bound j
+    | free z        => free z
+    | app (f, z)    => app (isubst (i, x, f), csubst (i, x, z))
+    | eq (a, m, n)  => eq (csubst (i, x, a), csubst (i, x, m), csubst (i, x, n))
 
   and csubst (i, x, y) =
     case y of
-      syn.inf e       => syn.inf (isubst (i, x, e))
-    | syn.lam e       => syn.lam (csubst (i + 1, x, e))
-    | syn.refl (a, z) => syn.refl (csubst (i, x, a), csubst (i, x, z))
+      inf e       => inf (isubst (i, x, e))
+    | lam e       => lam (csubst (i + 1, x, e))
+    | refl (a, z) => refl (csubst (i, x, a), csubst (i, x, z))
 end
 

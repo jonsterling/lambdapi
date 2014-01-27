@@ -17,7 +17,7 @@ sig
   and name
     = global of string
     | locl of int
-    | quote of int
+    | quoted of int
 
   and value
     = vlam of value -> value
