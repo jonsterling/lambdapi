@@ -19,7 +19,7 @@ struct
   exception cannot_synthesize_type
   exception mismatched_type of value * (value option)
 
-  fun itype (i, g: value name_env * ctx, x) =
+  fun itype (i, g, x) =
     case x of
       ann (e, t)   =>
         let
@@ -40,12 +40,12 @@ struct
         end
     | free x       =>
         (case lookup (x, #2 g) of
-          NONE    => raise unknown_identifier x
-        | SOME ty => ty)
+           NONE    => raise unknown_identifier x
+         | SOME ty => ty)
     | app (f, x)   =>
         (case itype (i, g, f) of
-          vpi (s, t) => (ctype (i, g, x, s); t (ceval (x, (#1 g, []))))
-        | _              => raise illegal_application (f, x))
+           vpi (s, t) => (ctype (i, g, x, s); t (ceval (x, (#1 g, []))))
+         | _              => raise illegal_application (f, x))
     | eq (a, x, y) =>
         let
           val _  = ctype (i, g, a, vuni)
@@ -69,29 +69,29 @@ struct
         end
     | lam e =>
         (case t of
-          vpi (dom, cod) =>
-            ctype (i + 1, ((fn (d,g) => (d, (locl i, dom) :: g)) g), csubst (0, free (locl i), e), cod (vfree (locl i)))
-        | _ => raise mismatched_type (t, NONE))
+           vpi (dom, cod) =>
+             ctype (i + 1, ((fn (d,g) => (d, (locl i, dom) :: g)) g), csubst (0, free (locl i), e), cod (vfree (locl i)))
+         | _ => raise mismatched_type (t, NONE))
     | refl (a,z) =>
         (case t of
-          veq (vb, vx, vy) =>
-            let
-              val _ = ctype (i, g, a, vuni)
-              val va = ceval (a, (#1 g, []))
-              val vz = ceval (z, (#1 g, []))
-              val qa = quote (0, va)
-              val qb = quote (0, vb)
-              val qz = quote (0, vz)
-              val qx = quote (0, vx)
-              val qy = quote (0, vy)
-            in
-              if qa <> qb orelse qz <> qx orelse qz <> qy
-              then
-                raise mismatched_type (t, NONE)
-              else
-                ()
-            end
-        | _ => raise mismatched_type (t, NONE))
+           veq (vb, vx, vy) =>
+             let
+               val _ = ctype (i, g, a, vuni)
+               val va = ceval (a, (#1 g, []))
+               val vz = ceval (z, (#1 g, []))
+               val qa = quote (0, va)
+               val qb = quote (0, vb)
+               val qz = quote (0, vz)
+               val qx = quote (0, vx)
+               val qy = quote (0, vy)
+             in
+               if qa <> qb orelse qz <> qx orelse qz <> qy
+               then
+                 raise mismatched_type (t, NONE)
+               else
+                 ()
+             end
+         | _ => raise mismatched_type (t, NONE))
 
   and isubst (i, x, y) =
     case y of

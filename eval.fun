@@ -19,8 +19,8 @@ struct
     | uni          => vuni
     | pi (s, t)    => vpi (ceval (s,g), fn x => ceval (s, (fn (e,d) => (e, x :: d)) g))
     | free n       => (case lookup (n, #1 g) of
-                            NONE   => vfree n
-                          | SOME x => x)
+                         NONE   => vfree n
+                       | SOME x => x)
     | bound i      => List.nth (#2 g, i)
     | app (f, x)   => vapp (ieval (f, g), ceval (x, g))
     | eq (a, x, y) => veq (ceval (a, g), ceval (x, g), ceval (y, g))
