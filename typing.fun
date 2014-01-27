@@ -95,7 +95,16 @@ struct
                 ()
             end
         | _ => raise mismatched_type (t, NONE))
-  and isubst x = raise hole
+
+  and isubst (i, x, y) =
+    case y of
+      syn.ann (c, c')   => syn.ann (csubst (i, x, c), csubst (i, x, c'))
+    | syn.uni           => syn.uni
+    | syn.pi (dom, cod) => syn.pi (csubst (i, x, dom), csubst (i + 1, x, cod))
+    | syn.bound j       => if i = j then x else syn.bound j
+    | syn.free z        => syn.free z
+    | syn.app (f, z)    => syn.app (isubst (i, x, f), csubst (i, x, z))
+    | syn.eq (a, m, n)  => syn.eq (csubst (i, x, a), csubst (i, x, m), csubst (i, x, n))
   and csubst x = raise hole
 end
 
