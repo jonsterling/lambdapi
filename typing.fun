@@ -15,8 +15,6 @@ struct
   structure eval = deps.eval
   structure quote = deps.quote
 
-  exception hole
-
   exception unknown_identifier of syn.name
   exception illegal_application of syn.iterm * syn.cterm
   exception cannot_synthesize_type
@@ -105,6 +103,11 @@ struct
     | syn.free z        => syn.free z
     | syn.app (f, z)    => syn.app (isubst (i, x, f), csubst (i, x, z))
     | syn.eq (a, m, n)  => syn.eq (csubst (i, x, a), csubst (i, x, m), csubst (i, x, n))
-  and csubst x = raise hole
+
+  and csubst (i, x, y) =
+    case y of
+      syn.inf e       => syn.inf (isubst (i, x, e))
+    | syn.lam e       => syn.lam (csubst (i + 1, x, e))
+    | syn.refl (a, z) => syn.refl (csubst (i, x, a), csubst (i, x, z))
 end
 
