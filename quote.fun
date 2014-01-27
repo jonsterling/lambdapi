@@ -1,6 +1,6 @@
 use "QUOTE.sig";
 
-functor Quotation (syn : SYN) : QUOTE =
+functor Quotation (syn : SYN) =
 struct
   structure syn = syn
 
@@ -23,3 +23,4 @@ struct
       syn.quote k => syn.bound (Int.max (i - k - 1, 0))
     | _           => syn.free n
 end
+:> QUOTE where syn = syn

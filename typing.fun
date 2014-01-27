@@ -11,8 +11,8 @@ end
 
 functor Typing (deps : TYPINGDEPS) :> TYPING =
 struct
-  structure syn = deps.syn
-  structure eval = deps.eval
+  structure syn   = deps.syn
+  structure eval  = deps.eval
   structure quote = deps.quote
 
   exception unknown_identifier of syn.name

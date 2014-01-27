@@ -1,6 +1,6 @@
 use "EVAL.sig";
 
-functor Evaluation (syn : SYN) : EVAL =
+functor Evaluation (syn : SYN) =
 struct
   structure syn = syn
 
@@ -25,3 +25,4 @@ struct
     | syn.eq (a, x, y) => syn.veq (ceval (a, g), ceval (x, g), ceval (y, g))
 
 end
+:> EVAL where syn = syn
